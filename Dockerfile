@@ -15,8 +15,11 @@ FROM nginx:alpine
 # Copy build output to nginx html folder
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Expose port 80 (nginx default)
+# Copy custom nginx config
+COPY nginx.conf /etc/nginx/templates/default.conf.template
+
+# Expose port (Railway injects PORT dynamically)
 EXPOSE 80
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start nginx with envsubst support (for $PORT)
+CMD ["sh", "-c", "envsubst '$PORT' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"]
