@@ -6,17 +6,16 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-# Stage 2: Serve with nginx
-FROM nginx:alpine
+# Stage 2: Serve with "serve"
+FROM node:22-alpine
+WORKDIR /app
 
-# Copy built app
-COPY --from=build /app/dist /usr/share/nginx/html
+# Install "serve"
+RUN npm install -g serve
 
-# Copy nginx template config
-COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+# Copy build output
+COPY --from=build /app/dist ./dist
 
-# Railway will provide PORT env variable
-EXPOSE 80
-
-# Replace $PORT in config at runtime and start nginx
-CMD ["sh", "-c", "envsubst '$PORT' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"]
+# Railway provides $PORT automatically
+EXPOSE 3000
+CMD ["sh", "-c", "serve -s dist -l ${PORT}"]
